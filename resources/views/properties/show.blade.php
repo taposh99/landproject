@@ -30,6 +30,36 @@
         <span class="text-slate-800 font-semibold truncate">{{ $property->title }}</span>
     </nav>
 
+    @guest
+        <!-- Guest Teaser Banner -->
+        <div class="mb-6 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-100/70 border border-emerald-200 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+            <div class="flex items-center gap-3.5">
+                <div class="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+                        <span>আপনি গেস্ট ভিজিটর হিসেবে জমিটি দেখছেন</span>
+                        <span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full border border-amber-200">সীমিত বিবরণ</span>
+                    </h3>
+                    <p class="text-xs text-slate-600 mt-0.5">
+                        জমির মালিকের সাথে সরাসরি কথা বলতে (ফোন/WhatsApp), খতিয়ান-দাগ নম্বর দেখতে ও সরেজমিনে ভিজিট বুক করতে বিনামূল্যে লগইন বা রেজিস্ট্রেশন করুন।
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+                <a href="{{ route('login') }}" class="flex-1 sm:flex-initial text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-xl shadow-sm transition active:scale-95 text-xs">
+                    লগইন করুন
+                </a>
+                <a href="{{ route('register') }}" class="flex-1 sm:flex-initial text-center bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold py-2 px-4 rounded-xl transition text-xs">
+                    নতুন একাউন্ট
+                </a>
+            </div>
+        </div>
+    @endguest
+
     <!-- Main Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
@@ -85,15 +115,35 @@
                         </h1>
                     </div>
 
-                    <!-- Price -->
-                    <div class="sm:text-right shrink-0 bg-emerald-50/80 p-3 sm:p-0 sm:bg-transparent rounded-2xl">
-                        <p class="text-xs text-slate-500 font-bold">মোট মূল্য</p>
-                        <p class="text-2xl sm:text-3xl font-black text-emerald-800">
-                            ৳ {{ $property->formatted_price }}
-                        </p>
-                        <p class="text-xs text-slate-500">
-                            {{ $property->is_negotiable ? 'আলোচনা সাপেক্ষ' : 'ফিক্সড রেট' }}
-                        </p>
+                    <!-- Price & Favorite Action -->
+                    <div class="flex items-center sm:items-end justify-between sm:justify-start gap-3 shrink-0">
+                        <div class="sm:text-right bg-emerald-50/80 p-3 sm:p-0 sm:bg-transparent rounded-2xl">
+                            <p class="text-xs text-slate-500 font-bold">মোট মূল্য</p>
+                            <p class="text-2xl sm:text-3xl font-black text-emerald-800">
+                                ৳ {{ $property->formatted_price }}
+                            </p>
+                            <p class="text-xs text-slate-500">
+                                {{ $property->is_negotiable ? 'আলোচনা সাপেক্ষ' : 'ফিক্সড রেট' }}
+                            </p>
+                        </div>
+
+                        <!-- Favorite Heart Button -->
+                        @auth
+                            <form action="{{ route('properties.favorite', $property->id) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="w-11 h-11 rounded-2xl flex items-center justify-center transition border {{ $isFavorited ? 'bg-red-50 text-red-600 border-red-200' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100' }}" title="{{ $isFavorited ? 'পছন্দের তালিকা থেকে বাদ দিন' : 'পছন্দের তালিকায় রাখুন' }}">
+                                    <svg class="w-5 h-5 {{ $isFavorited ? 'fill-current' : 'fill-none' }}" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                    </svg>
+                                </button>
+                            </form>
+                        @else
+                            <a href="{{ route('login') }}" title="পছন্দের তালিকায় রাখতে লগইন করুন" class="w-11 h-11 rounded-2xl flex items-center justify-center transition border bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100 hover:text-red-500">
+                                <svg class="w-5 h-5 fill-none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                            </a>
+                        @endauth
                     </div>
                 </div>
 
@@ -135,7 +185,16 @@
                         </div>
                         <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
                             <span class="text-slate-500">দাগ নম্বর:</span>
-                            <span class="font-bold text-slate-800">{{ $property->daag_no ?? 'মালিকের কাছে সংরক্ষিত' }}</span>
+                            @auth
+                                <span class="font-bold text-slate-800">{{ $property->daag_no ?? 'মালিকের কাছে সংরক্ষিত' }}</span>
+                            @else
+                                <a href="{{ route('login') }}" class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded-lg border border-amber-200 transition" title="দাগ নম্বর দেখতে লগইন করুন">
+                                    <svg class="w-3.5 h-3.5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                    </svg>
+                                    <span>লগইন করে দেখুন</span>
+                                </a>
+                            @endauth
                         </div>
                         <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
                             <span class="text-slate-500">নামজারি / খারিজ:</span>
@@ -264,74 +323,123 @@
 
                 <!-- Call & WhatsApp CTA -->
                 <div class="py-4 space-y-2.5">
-                    <a href="tel:{{ $property->contact_number }}" class="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-2xl shadow-md transition active:scale-95 text-sm">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                        </svg>
-                        <span>সরাসরি কল করুন ({{ $property->contact_number }})</span>
-                    </a>
-
-                    @if($property->whatsapp_number)
-                        <a href="https://wa.me/88{{ $property->whatsapp_number }}?text={{ urlencode('আসসালামু আলাইকুম, আমি জমিরহাট প্ল্যাটফর্মে আপনার ' . $property->title . ' জমিটি দেখেছি। এই বিষয়ে বিস্তারিত জানতে চাই।') }}" target="_blank" rel="noopener noreferrer" class="w-full flex items-center justify-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold py-3 px-4 rounded-2xl transition active:scale-95 text-sm">
-                            <svg class="w-5 h-5 fill-emerald-600" viewBox="0 0 24 24">
-                                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
+                    @auth
+                        <a href="tel:{{ $property->contact_number }}" class="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-2xl shadow-md transition active:scale-95 text-sm">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                             </svg>
-                            <span>WhatsApp এ মেসেজ দিন</span>
+                            <span>সরাসরি কল করুন ({{ $property->contact_number }})</span>
                         </a>
-                    @endif
+
+                        @if($property->whatsapp_number)
+                            <a href="https://wa.me/88{{ $property->whatsapp_number }}?text={{ urlencode('আসসালামু আলাইকুম, আমি জমিরহাট প্ল্যাটফর্মে আপনার ' . $property->title . ' জমিটি দেখেছি। এই বিষয়ে বিস্তারিত জানতে চাই।') }}" target="_blank" rel="noopener noreferrer" class="w-full flex items-center justify-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold py-3 px-4 rounded-2xl transition active:scale-95 text-sm">
+                                <svg class="w-5 h-5 fill-emerald-600" viewBox="0 0 24 24">
+                                    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
+                                </svg>
+                                <span>WhatsApp এ মেসেজ দিন</span>
+                            </a>
+                        @endif
+                    @else
+                        @php
+                            $maskedPhone = substr($property->contact_number, 0, 5) . '-***' . substr($property->contact_number, -3);
+                        @endphp
+                        <div class="p-4 rounded-2xl bg-amber-50/90 border border-amber-200 text-center space-y-3">
+                            <div class="flex items-center justify-center gap-1.5 text-amber-900 font-bold text-xs uppercase tracking-wide">
+                                <svg class="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                                <span>মালিকের ফোন নম্বর লকড</span>
+                            </div>
+
+                            <div class="bg-white/90 py-2.5 px-3 rounded-xl border border-amber-200 font-mono font-black text-slate-500 text-sm tracking-widest blur-[1px]">
+                                {{ $maskedPhone }}
+                            </div>
+
+                            <p class="text-[11px] text-amber-950 leading-snug">
+                                সরাসরি জমির মালিকের সাথে ফোনে ও WhatsApp-এ কথা বলতে অনুগ্রহ করে লগইন করুন।
+                            </p>
+
+                            <div class="pt-1 flex flex-col gap-2">
+                                <a href="{{ route('login') }}" class="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl shadow-md transition active:scale-95 text-xs">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                                    </svg>
+                                    <span>লগইন করে নম্বর আনলক করুন</span>
+                                </a>
+                                <a href="{{ route('register') }}" class="text-[11px] text-slate-600 hover:text-emerald-700 font-bold underline">
+                                    নতুন অ্যাকাউন্ট তৈরি করুন (সম্পূর্ণ ফ্রি)
+                                </a>
+                            </div>
+                        </div>
+                    @endauth
                 </div>
 
                 <!-- Book a Site Visit Form -->
                 <div class="pt-4 border-t border-slate-100">
-                    <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider mb-2">
-                        🗓️ জমি পরিদর্শনের আবেদন (Book a Visit)
+                    <h4 class="font-bold text-slate-900 text-xs uppercase tracking-wider mb-2 flex items-center justify-between">
+                        <span>🗓️ জমি পরিদর্শনের আবেদন (Book a Visit)</span>
+                        @guest
+                            <span class="text-[10px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">লগইন প্রয়োজন</span>
+                        @endguest
                     </h4>
-                    <p class="text-xs text-slate-500 mb-3">জমিতে সরেজমিনে যেতে চাইলে সময় ও আপনার তথ্য দিন:</p>
 
-                    <form action="{{ route('properties.inquiry', $property->id) }}" method="POST" class="space-y-3">
-                        @csrf
-                        <div>
-                            <input 
-                                type="text" 
-                                name="name" 
-                                required 
-                                value="{{ Auth::user()?->name ?? '' }}" 
-                                placeholder="আপনার নাম"
-                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                            >
-                        </div>
-                        <div>
-                            <input 
-                                type="tel" 
-                                name="phone" 
-                                required 
-                                value="{{ Auth::user()?->phone ?? '' }}" 
-                                placeholder="মোবাইল নম্বর"
-                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                            >
-                        </div>
-                        <div>
-                            <label class="block text-[11px] text-slate-500 font-semibold mb-1">পরিদর্শনের সম্ভাব্য তারিখ:</label>
-                            <input 
-                                type="date" 
-                                name="preferred_visit_date" 
-                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                            >
-                        </div>
-                        <div>
-                            <textarea 
-                                name="message" 
-                                rows="2" 
-                                required 
-                                placeholder="আপনার বার্তা বা প্রশ্ন..."
-                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                            >আমি জমিটি দেখতে আগ্রহী।</textarea>
-                        </div>
+                    @auth
+                        <p class="text-xs text-slate-500 mb-3">জমিতে সরেজমিনে যেতে চাইলে সময় ও আপনার তথ্য দিন:</p>
 
-                        <button type="submit" class="w-full bg-slate-900 hover:bg-black text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow-sm transition">
-                            আবেদন পাঠান
-                        </button>
-                    </form>
+                        <form action="{{ route('properties.inquiry', $property->id) }}" method="POST" class="space-y-3">
+                            @csrf
+                            <div>
+                                <input 
+                                    type="text" 
+                                    name="name" 
+                                    required 
+                                    value="{{ Auth::user()->name }}" 
+                                    placeholder="আপনার নাম"
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                >
+                            </div>
+                            <div>
+                                <input 
+                                    type="tel" 
+                                    name="phone" 
+                                    required 
+                                    value="{{ Auth::user()->phone }}" 
+                                    placeholder="মোবাইল নম্বর"
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                >
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-slate-500 font-semibold mb-1">পরিদর্শনের সম্ভাব্য তারিখ:</label>
+                                <input 
+                                    type="date" 
+                                    name="preferred_visit_date" 
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                >
+                            </div>
+                            <div>
+                                <textarea 
+                                    name="message" 
+                                    rows="2" 
+                                    required 
+                                    placeholder="আপনার বার্তা বা প্রশ্ন..."
+                                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                                >আমি জমিটি দেখতে আগ্রহী।</textarea>
+                            </div>
+
+                            <button type="submit" class="w-full bg-slate-900 hover:bg-black text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow-sm transition">
+                                আবেদন পাঠান
+                            </button>
+                        </form>
+                    @else
+                        <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 text-center space-y-2.5">
+                            <p class="text-xs text-slate-600 leading-relaxed">
+                                জমিতে সরাসরি যাওয়ার জন্য তারিখ নির্ধারণ ও মালিকের কাছে শিডিউল রিকোয়েস্ট পাঠাতে লগইন প্রয়োজন।
+                            </p>
+                            <a href="{{ route('login') }}" class="inline-flex items-center justify-center gap-1.5 w-full bg-slate-900 hover:bg-black text-white font-bold py-2 px-3 rounded-xl text-xs shadow-sm transition">
+                                <span>লগইন করে শিডিউল পাঠান</span>
+                            </a>
+                        </div>
+                    @endauth
                 </div>
 
                 <!-- Safety Note -->

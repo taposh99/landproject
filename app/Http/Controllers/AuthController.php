@@ -78,7 +78,7 @@ class AuthController extends Controller
 
         Auth::login($user);
 
-        return redirect()->route('home')->with('success', 'আপনার অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে!');
+        return redirect()->intended(route('home'))->with('success', 'আপনার অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে!');
     }
 
     public function logout(Request $request): RedirectResponse

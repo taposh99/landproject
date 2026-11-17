@@ -15,8 +15,10 @@ Route::get('/api/upazilas', [HomeController::class, 'getUpazilas'])->name('api.u
 Route::get('/api/unions', [HomeController::class, 'getUnions'])->name('api.unions');
 Route::get('/api/villages', [HomeController::class, 'getVillages'])->name('api.villages');
 
-// Public Inquiry submission (works for both guests & logged-in users)
-Route::post('/property/{property}/inquiry', [PropertyController::class, 'submitInquiry'])->name('properties.inquiry');
+// Public Inquiry submission (requires login)
+Route::post('/property/{property}/inquiry', [PropertyController::class, 'submitInquiry'])
+    ->name('properties.inquiry')
+    ->middleware('auth');
 
 // Guest Authentication Routes
 Route::middleware('guest')->group(function () {

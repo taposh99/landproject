@@ -23,70 +23,105 @@
             ঘোড়াশাল, চরসিন্দুর, ডাঙ্গা, জিনারদী ও আশেপাশের এলাকার আবাসিক, বাণিজ্যিক ও কৃষি জমি। অ্যাডমিন দ্বারা ভেরিফাইড এবং সরাসরি মালিকের সাথে যোগাযোগের সুবিধা।
         </p>
 
-        <!-- Search Box -->
-        <div class="bg-white text-slate-800 p-3 sm:p-5 rounded-3xl shadow-2xl border border-white/20 max-w-4xl mx-auto text-left">
-            <form action="{{ route('properties.index') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <!-- Search Box with District > Upazila > Union > Village Cascading Filters -->
+        <div class="bg-white text-slate-800 p-4 sm:p-6 rounded-3xl shadow-2xl border border-white/20 max-w-5xl mx-auto text-left"
+             x-data="homeSearchPicker(@js($districts), {{ $palashUpazila?->id ?? 'null' }})">
+            <form action="{{ route('properties.index') }}" method="GET" class="space-y-3.5">
                 
-                <!-- District -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1">জেলা নির্বাচন</label>
-                    <select name="district_id" id="district_select" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                        @foreach($districts as $district)
-                            <option value="{{ $district->id }}" {{ $district->name === 'Narsingdi' ? 'selected' : '' }}>
-                                {{ $district->bn_name }}
-                            </option>
-                        @endforeach
-                    </select>
+                <!-- ধাপ ১: অবস্থান নির্বাচন (জেলা > থানা > ইউনিয়ন > গ্রাম) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <!-- জেলা -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1 flex items-center justify-between">
+                            <span>জেলা নির্বাচন</span>
+                            <span class="text-[10px] text-emerald-600 font-semibold">ধাপ ১</span>
+                        </label>
+                        <select name="district_id" x-model="selectedDistrict" @change="onDistrictChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <template x-for="d in districts" :key="d.id">
+                                <option :value="d.id" x-text="d.bn_name" :selected="d.id == selectedDistrict"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    <!-- উপজেলা / থানা -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1 flex items-center justify-between">
+                            <span>উপজেলা / থানা</span>
+                            <span class="text-[10px] text-emerald-600 font-semibold">ধাপ ২</span>
+                        </label>
+                        <select name="upazila_id" x-model="selectedUpazila" @change="onUpazilaChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="">সকল থানা</option>
+                            <template x-for="u in currentUpazilas" :key="u.id">
+                                <option :value="u.id" x-text="(u.name === 'Palash' || u.bn_name.includes('পলাশ') ? '📍 ' : '') + u.bn_name" :selected="u.id == selectedUpazila"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    <!-- ইউনিয়ন / পৌরসভা -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1 flex items-center justify-between">
+                            <span>ইউনিয়ন / পৌরসভা</span>
+                            <span class="text-[10px] text-emerald-600 font-semibold">ধাপ ৩</span>
+                        </label>
+                        <select name="union_id" x-model="selectedUnion" @change="onUnionChange()" class="w-full bg-slate-50 border border-emerald-200 bg-emerald-50/30 rounded-xl px-3 py-2.5 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="">সকল ইউনিয়ন / পৌরসভা</option>
+                            <template x-for="un in currentUnions" :key="un.id">
+                                <option :value="un.id" x-text="un.bn_name" :selected="un.id == selectedUnion"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    <!-- গ্রাম / এলাকা -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1 flex items-center justify-between">
+                            <span>গ্রাম / এলাকা</span>
+                            <span class="text-[10px] text-emerald-600 font-semibold">ধাপ ৪</span>
+                        </label>
+                        <select name="village_id" x-model="selectedVillage" class="w-full bg-slate-50 border border-emerald-200 bg-emerald-50/30 rounded-xl px-3 py-2.5 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="" x-text="selectedUnion ? 'সকল গ্রাম / এলাকা' : 'প্রথমে ইউনিয়ন বাছুন'"></option>
+                            <template x-for="v in currentVillages" :key="v.id">
+                                <option :value="v.id" x-text="v.bn_name" :selected="v.id == selectedVillage"></option>
+                            </template>
+                        </select>
+                    </div>
                 </div>
 
-                <!-- Upazila / Thana (Default Palash) -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1">উপজেলা / থানা</label>
-                    <select name="upazila_id" id="upazila_select" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                        <option value="">সকল থানা</option>
-                        @if($palashUpazila)
-                            <option value="{{ $palashUpazila->id }}" selected>
-                                📍 {{ $palashUpazila->bn_name }} (নির্বাচিত)
-                            </option>
-                        @endif
-                        @foreach($districts->firstWhere('name', 'Narsingdi')?->upazilas ?? [] as $upz)
-                            @if(!$palashUpazila || $upz->id !== $palashUpazila->id)
-                                <option value="{{ $upz->id }}">{{ $upz->bn_name }}</option>
-                            @endif
-                        @endforeach
-                    </select>
-                </div>
+                <!-- ধাপ ২: জমির ধরন ও সার্চ বাটন -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                    <!-- Land Type -->
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold text-slate-600 mb-1">জমির ধরন</label>
+                        <select name="land_type" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="">সব ধরনের জমি (আবাসিক, বাণিজ্যিক, কৃষি, শিল্প)</option>
+                            <option value="residential">🏡 আবাসিক প্লট / বাড়ি করার জমি</option>
+                            <option value="commercial">🏬 বাণিজ্যিক জমি / দোকান</option>
+                            <option value="agricultural">🌾 কৃষি ও নাল জমি</option>
+                            <option value="industrial">🏭 শিল্প কারখানার উপযোগী জমি</option>
+                        </select>
+                    </div>
 
-                <!-- Land Type -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1">জমির ধরন</label>
-                    <select name="land_type" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                        <option value="">সব ধরনের জমি</option>
-                        <option value="residential">🏡 আবাসিক প্লট / বাড়ি</option>
-                        <option value="commercial">🏬 বাণিজ্যিক / দোকান</option>
-                        <option value="agricultural">🌾 কৃষি / নাল জমি</option>
-                        <option value="industrial">🏭 শিল্প কারখানা প্লট</option>
-                    </select>
-                </div>
-
-                <!-- Submit Button -->
-                <div class="flex items-end">
-                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl shadow-md transition active:scale-95 flex items-center justify-center gap-2">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        <span>জমি খুঁজুন</span>
-                    </button>
+                    <!-- Submit Button -->
+                    <div class="flex items-end">
+                        <button type="submit" class="w-full h-[42px] bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-700/25 transition">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            <span>জমি খুঁজুন</span>
+                        </button>
+                    </div>
                 </div>
             </form>
 
-            <!-- Quick Filter Tags -->
-            <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2 text-xs">
-                <span class="font-bold text-slate-500">জনপ্রিয় এলাকা:</span>
-                <a href="{{ route('properties.index', ['upazila_id' => $palashUpazila?->id, 'q' => 'ঘোড়াশাল']) }}" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-medium transition">ঘোড়াশাল</a>
-                <a href="{{ route('properties.index', ['upazila_id' => $palashUpazila?->id, 'q' => 'চরসিন্দুর']) }}" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-medium transition">চরসিন্দুর বাজার</a>
-                <a href="{{ route('properties.index', ['upazila_id' => $palashUpazila?->id, 'q' => 'ডাঙ্গা']) }}" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-medium transition">ডাঙ্গা শিল্পাঞ্চল</a>
-                <a href="{{ route('properties.index', ['upazila_id' => $palashUpazila?->id, 'q' => 'জিনারদী']) }}" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-medium transition">জিনারদী</a>
+            <!-- Quick Filter Tags by Union -->
+            <div class="mt-3.5 pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2 text-xs">
+                <span class="font-bold text-slate-500">পলাশের ইউনিয়নসমূহ:</span>
+                @if($palashUpazila)
+                    @foreach($palashUpazila->unions as $u)
+                        <a href="{{ route('properties.index', ['upazila_id' => $palashUpazila->id, 'union_id' => $u->id]) }}" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold transition border border-emerald-100">
+                            {{ $u->bn_name }} ({{ $u->villages->count() }}টি গ্রাম)
+                        </a>
+                    @endforeach
+                @endif
             </div>
         </div>
 
@@ -120,7 +155,7 @@
                 পলাশ থানার জমি কেনা-বেচার তালিকা
             </h2>
             <p class="text-xs sm:text-sm text-slate-500">
-                ঘোড়াশাল, চরসিন্দুর ও ডাঙ্গা এলাকার অনুমোদিত ও নির্ভরযোগ্য জমি
+                ঘোড়াশাল, গজারিয়া, চরসিন্দুর, ডাংগা ও জিনারদী এলাকার অনুমোদিত ও নির্ভরযোগ্য জমি
             </p>
         </div>
 
@@ -270,6 +305,49 @@
 
 @push('scripts')
 <script>
+    function homeSearchPicker(districtsData, defaultPalashId) {
+        return {
+            districts: districtsData || [],
+            selectedDistrict: 1,
+            selectedUpazila: defaultPalashId || '',
+            selectedUnion: '',
+            selectedVillage: '',
+            init() {
+                let narsingdi = this.districts.find(d => d.name === 'Narsingdi' || d.bn_name.includes('নরসিংদী'));
+                if (narsingdi) {
+                    this.selectedDistrict = narsingdi.id;
+                }
+                if (defaultPalashId) {
+                    this.selectedUpazila = defaultPalashId;
+                }
+            },
+            get currentUpazilas() {
+                let dist = this.districts.find(d => d.id == this.selectedDistrict);
+                return dist && dist.upazilas ? dist.upazilas : [];
+            },
+            get currentUnions() {
+                let upz = this.currentUpazilas.find(u => u.id == this.selectedUpazila);
+                return upz && upz.unions ? upz.unions : [];
+            },
+            get currentVillages() {
+                let un = this.currentUnions.find(u => u.id == this.selectedUnion);
+                return un && un.villages ? un.villages : [];
+            },
+            onDistrictChange() {
+                this.selectedUpazila = '';
+                this.selectedUnion = '';
+                this.selectedVillage = '';
+            },
+            onUpazilaChange() {
+                this.selectedUnion = '';
+                this.selectedVillage = '';
+            },
+            onUnionChange() {
+                this.selectedVillage = '';
+            }
+        }
+    }
+
     function landCalculator() {
         return {
             amount: 5,

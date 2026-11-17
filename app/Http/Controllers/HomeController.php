@@ -15,15 +15,15 @@ class HomeController extends Controller
 {
     public function index(): View
     {
-        $districts = District::with('upazilas')->get();
-        $palashUpazila = Upazila::where('name', 'Palash')->first();
+        $districts = District::with(['upazilas.unions.villages'])->get();
+        $palashUpazila = Upazila::with(['unions.villages'])->where('name', 'Palash')->first();
 
         // Palash specific properties
         $palashProperties = Property::approved()
             ->when($palashUpazila, function ($query) use ($palashUpazila) {
                 $query->where('upazila_id', $palashUpazila->id);
             })
-            ->with(['district', 'upazila'])
+            ->with(['district', 'upazila', 'union', 'village', 'images', 'user'])
             ->latest()
             ->take(6)
             ->get();
@@ -31,7 +31,7 @@ class HomeController extends Controller
         // Featured properties overall
         $featuredProperties = Property::approved()
             ->where('is_featured', true)
-            ->with(['district', 'upazila'])
+            ->with(['district', 'upazila', 'union', 'village', 'images', 'user'])
             ->latest()
             ->take(6)
             ->get();
