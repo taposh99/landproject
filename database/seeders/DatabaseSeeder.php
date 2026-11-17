@@ -2,24 +2,221 @@
 
 namespace Database\Seeders;
 
+use App\Models\District;
+use App\Models\Property;
+use App\Models\Upazila;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
      * Seed the application's database.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // 1. Create Roles
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        $sellerRole = Role::firstOrCreate(['name' => 'seller']);
+        $buyerRole = Role::firstOrCreate(['name' => 'buyer']);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // 2. Create Users
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@landproject.com'],
+            [
+                'name' => 'Admin User',
+                'phone' => '01711000001',
+                'password' => Hash::make('password'),
+            ]
+        );
+        $admin->syncRoles([$adminRole]);
+
+        $seller = User::firstOrCreate(
+            ['email' => 'seller@landproject.com'],
+            [
+                'name' => 'জমির মালিক (করিম সাহেব)',
+                'phone' => '01812345678',
+                'password' => Hash::make('password'),
+            ]
+        );
+        $seller->syncRoles([$sellerRole]);
+
+        $buyer = User::firstOrCreate(
+            ['email' => 'buyer@landproject.com'],
+            [
+                'name' => 'ক্রেতা (রহিম আহমেদ)',
+                'phone' => '01912345678',
+                'password' => Hash::make('password'),
+            ]
+        );
+        $buyer->syncRoles([$buyerRole]);
+
+        // 3. Create Locations (Focus on Narsingdi & Palash as requested)
+        $narsingdi = District::firstOrCreate(
+            ['name' => 'Narsingdi'],
+            ['bn_name' => 'নরসিংদী']
+        );
+
+        $dhaka = District::firstOrCreate(
+            ['name' => 'Dhaka'],
+            ['bn_name' => 'ঢাকা']
+        );
+
+        $palash = Upazila::firstOrCreate(
+            ['district_id' => $narsingdi->id, 'name' => 'Palash'],
+            ['bn_name' => 'পলাশ']
+        );
+
+        Upazila::firstOrCreate(
+            ['district_id' => $narsingdi->id, 'name' => 'Narsingdi Sadar'],
+            ['bn_name' => 'নরসিংদী সদর']
+        );
+
+        Upazila::firstOrCreate(
+            ['district_id' => $narsingdi->id, 'name' => 'Shibpur'],
+            ['bn_name' => 'শিবপুর']
+        );
+
+        Upazila::firstOrCreate(
+            ['district_id' => $narsingdi->id, 'name' => 'Raipura'],
+            ['bn_name' => 'রায়পুরা']
+        );
+
+        Upazila::firstOrCreate(
+            ['district_id' => $narsingdi->id, 'name' => 'Belabo'],
+            ['bn_name' => 'বেলাবো']
+        );
+
+        Upazila::firstOrCreate(
+            ['district_id' => $narsingdi->id, 'name' => 'Monohardi'],
+            ['bn_name' => 'মনোহরদী']
+        );
+
+        // 4. Sample Land Listings
+        $properties = [
+            [
+                'user_id' => $seller->id,
+                'district_id' => $narsingdi->id,
+                'upazila_id' => $palash->id,
+                'mouza_area' => 'ঘোড়াশাল',
+                'title' => 'ঘোড়াশাল মেইন রোডের পাশে ৫ শতাংশ নিষ্কন্টক আবাসিক প্লট',
+                'slug' => 'ghorashal-main-road-5-decimal-residential-plot-'.Str::random(5),
+                'description' => 'পলাশ থানার অন্তর্গত ঘোড়াশাল পৌর এলাকায় মেইন হাইওয়ের সাথে লাগানো চমৎকার ৫ শতাংশ আবাসিক জমি। সামনে ২০ ফিট প্রশস্ত পাকা রাস্তা রয়েছে। গ্যাস ও বিদ্যুৎ লাইন সংযোগের সুবিধা বিদ্যমান। বাড়ি নির্মাণ কিংবা বাউন্ডারি দিয়ে রাখার জন্য আদর্শ জায়গা। সকল কাগজপত্র (খতিয়ান, খারিজ, হালনাগাদ খাজনা) ১০০% নিষ্কন্টক।',
+                'land_type' => 'residential',
+                'land_size' => 5.00,
+                'size_unit' => 'decimal',
+                'price' => 3500000.00, // 35 Lakh
+                'price_type' => 'total',
+                'is_negotiable' => true,
+                'road_width_feet' => 20,
+                'road_type' => 'paved',
+                'address' => 'ঘোড়াশাল পৌরসভা, পলাশ, নরসিংদী',
+                'khatian_type' => 'RS / BS',
+                'daag_no' => '১০৫২',
+                'khatian_no' => '৮৭০',
+                'is_mutation_done' => true,
+                'is_tax_updated' => true,
+                'contact_number' => '01812345678',
+                'whatsapp_number' => '01812345678',
+                'status' => 'approved',
+                'is_verified' => true,
+                'is_featured' => true,
+                'featured_image' => 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80',
+            ],
+            [
+                'user_id' => $seller->id,
+                'district_id' => $narsingdi->id,
+                'upazila_id' => $palash->id,
+                'mouza_area' => 'চরসিন্দুর',
+                'title' => 'চরসিন্দুর বাজারের সাথে ৩.৫ শতাংশ বাণিজ্যিক প্লট বিক্রয়',
+                'slug' => 'charsindur-bazar-commercial-plot-'.Str::random(5),
+                'description' => 'চরসিন্দুর বাজারের মূল কেন্দ্রস্থলে ৩.৫ শতাংশ বাণিজ্যিক জমি বিক্রয় হবে। মার্কেট, দোকানপাট বা বাণিজ্যিক গোডাউনের জন্য অতি চমৎকার লোকেশন। সামনে ২৫ ফিট পিচ ঢালাই রাস্তা। চতুর্দিকে মার্কেট রয়েছে। কাগজপত্র সম্পূর্ণ ফ্রেশ ও নির্ভেজাল। সরাসরি মালিকের সাথে কথা বলে বায়না করতে পারবেন।',
+                'land_type' => 'commercial',
+                'land_size' => 3.50,
+                'size_unit' => 'decimal',
+                'price' => 4500000.00, // 45 Lakh
+                'price_type' => 'total',
+                'is_negotiable' => false,
+                'road_width_feet' => 25,
+                'road_type' => 'paved',
+                'address' => 'চরসিন্দুর বাজার মোড়, পলাশ, নরসিংদী',
+                'khatian_type' => 'RS',
+                'daag_no' => '৩২১',
+                'khatian_no' => '১৪৫',
+                'is_mutation_done' => true,
+                'is_tax_updated' => true,
+                'contact_number' => '01812345678',
+                'whatsapp_number' => '01812345678',
+                'status' => 'approved',
+                'is_verified' => true,
+                'is_featured' => false,
+                'featured_image' => 'https://images.unsplash.com/photo-1524813686514-a57563d77d66?auto=format&fit=crop&w=1200&q=80',
+            ],
+            [
+                'user_id' => $seller->id,
+                'district_id' => $narsingdi->id,
+                'upazila_id' => $palash->id,
+                'mouza_area' => 'ডাঙ্গা',
+                'title' => 'পলাশ ডাঙ্গা শিল্পাঞ্চল রোডের কাছে ১০ কাঠা উঁচু নাল/কৃষি জমি',
+                'slug' => 'danga-palash-10-katha-land-'.Str::random(5),
+                'description' => 'ডাঙ্গা শিল্প এলাকায় চমৎকার ১০ কাঠা উঁচু জমি। চতুর্দিকে কারখানা ও আবাসিক বসতি গড়ে উঠছে। এগ্রো ফার্ম, পোল্ট্রি, ছোট কারখানা অথবা ভবিষ্যৎ বিনিয়োগের জন্য অসাধারণ একটি প্লট। বর্ষায় পানি উঠে না। ১২ ফিট ইটের সোলিং রাস্তা বিদ্যমান। জরুরি টাকার প্রয়োজনে বিক্রি করা হচ্ছে।',
+                'land_type' => 'agricultural',
+                'land_size' => 10.00,
+                'size_unit' => 'katha',
+                'price' => 2800000.00, // 28 Lakh
+                'price_type' => 'total',
+                'is_negotiable' => true,
+                'road_width_feet' => 12,
+                'road_type' => 'brick',
+                'address' => 'ডাঙ্গা ইউনিয়ন, পলাশ, নরসিংদী',
+                'khatian_type' => 'SA / RS',
+                'daag_no' => '৬১২',
+                'khatian_no' => '২৯০',
+                'is_mutation_done' => true,
+                'is_tax_updated' => true,
+                'contact_number' => '01712000000',
+                'whatsapp_number' => '01712000000',
+                'status' => 'approved',
+                'is_verified' => false,
+                'is_featured' => false,
+                'featured_image' => 'https://images.unsplash.com/photo-1500076656116-558758c991c1?auto=format&fit=crop&w=1200&q=80',
+            ],
+            [
+                'user_id' => $seller->id,
+                'district_id' => $narsingdi->id,
+                'upazila_id' => $palash->id,
+                'mouza_area' => 'জিনারদী',
+                'title' => 'জিনারদী রেলওয়ে স্টেশন সংলগ্ন ৪ শতাংশ ভিটা জমি (নতুন লিস্টিং)',
+                'slug' => 'jinardi-railway-station-4-decimal-land-'.Str::random(5),
+                'description' => 'পলাশ উপজেলার জিনারদী ইউনিয়ন পরিষদ ও রেলওয়ে স্টেশনের কাছে নিরিবিলি পরিবেশে বাড়ি করার উপযোগী ৪ শতাংশ উঁচু ভিটা জমি। বিদ্যুৎ সংযোগ পাশেই আছে। এটি একটি পেন্ডিং পোস্ট যা অ্যাডমিন অ্যাপ্রুভালের অপেক্ষায় রয়েছে।',
+                'land_type' => 'residential',
+                'land_size' => 4.00,
+                'size_unit' => 'decimal',
+                'price' => 1800000.00,
+                'price_type' => 'total',
+                'is_negotiable' => true,
+                'road_width_feet' => 10,
+                'road_type' => 'dirt',
+                'address' => 'জিনারদী, পলাশ, নরসিংদী',
+                'khatian_type' => 'RS',
+                'daag_no' => '৭৮',
+                'khatian_no' => '৫৬',
+                'is_mutation_done' => false,
+                'is_tax_updated' => true,
+                'contact_number' => '01911223344',
+                'whatsapp_number' => '01911223344',
+                'status' => 'pending', // Pending for admin approval demo!
+                'is_verified' => false,
+                'is_featured' => false,
+                'featured_image' => 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=1200&q=80',
+            ],
+        ];
+
+        foreach ($properties as $propData) {
+            Property::create($propData);
+        }
     }
 }
