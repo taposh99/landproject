@@ -38,10 +38,10 @@
         @csrf
 
         <!-- 1. Basic Info -->
-        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4" x-data="locationPicker(@js($districts))">
             <h2 class="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
                 <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs flex items-center justify-center font-bold">১</span>
-                জমির শিরোনাম ও অবস্থান
+                জমির শিরোনাম ও অবস্থান (জেলা > থানা > ইউনিয়ন > গ্রাম)
             </h2>
 
             <div>
@@ -59,35 +59,61 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">জেলা *</label>
-                    <select name="district_id" id="post_district_id" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                        @foreach($districts as $district)
-                            <option value="{{ $district->id }}" {{ $district->name === 'Narsingdi' ? 'selected' : '' }}>
-                                {{ $district->bn_name }}
-                            </option>
-                        @endforeach
+                    <select name="district_id" x-model="selectedDistrict" @change="onDistrictChange()" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <template x-for="d in districts" :key="d.id">
+                            <option :value="d.id" x-text="d.bn_name" :selected="d.id == selectedDistrict"></option>
+                        </template>
                     </select>
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">উপজেলা / থানা *</label>
-                    <select name="upazila_id" id="post_upazila_id" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                        @foreach($districts->firstWhere('name', 'Narsingdi')?->upazilas ?? [] as $upz)
-                            <option value="{{ $upz->id }}" {{ $upz->name === 'Palash' ? 'selected' : '' }}>
-                                {{ $upz->bn_name }}
-                            </option>
-                        @endforeach
+                    <select name="upazila_id" x-model="selectedUpazila" @change="onUpazilaChange()" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <option value="">উপজেলা নির্বাচন করুন</option>
+                        <template x-for="u in currentUpazilas" :key="u.id">
+                            <option :value="u.id" x-text="u.bn_name" :selected="u.id == selectedUpazila"></option>
+                        </template>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Union and Village Level Selectors -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                        <span>ইউনিয়ন / পৌরসভা</span>
+                        <span class="text-[10px] text-emerald-600 font-medium">থানার আওতাধীন</span>
+                    </label>
+                    <select name="union_id" x-model="selectedUnion" @change="onUnionChange()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <option value="">সকল ইউনিয়ন / পৌরসভা</option>
+                        <template x-for="un in currentUnions" :key="un.id">
+                            <option :value="un.id" x-text="un.bn_name" :selected="un.id == selectedUnion"></option>
+                        </template>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                        <span>গ্রাম / এলাকা</span>
+                        <span class="text-[10px] text-emerald-600 font-medium">ইউনিয়নের আওতাধীন</span>
+                    </label>
+                    <select name="village_id" x-model="selectedVillage" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <option value="">গ্রাম নির্বাচন করুন (ঐচ্ছিক)</option>
+                        <template x-for="v in currentVillages" :key="v.id">
+                            <option :value="v.id" x-text="v.bn_name" :selected="v.id == selectedVillage"></option>
+                        </template>
                     </select>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">মৌজা বা ইউনিয়ন / এলাকার নাম</label>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">মৌজা বা পাড়ার নাম (ঐচ্ছিক)</label>
                     <input 
                         type="text" 
                         name="mouza_area" 
                         value="{{ old('mouza_area') }}" 
-                        placeholder="যেমন: ঘোড়াশাল পৌরসভা / চরসিন্দুর / ডাঙ্গা"
+                        placeholder="যেমন: ভাগ্যেরপাড়া / মোল্লাবাড়ি সংলগ্ন"
                         class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                     >
                 </div>
@@ -297,6 +323,26 @@
                 </div>
             </div>
 
+            <!-- YouTube Video URL Input -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                    </svg>
+                    <span>জমির ইউটিউব ভিডিও লিংক (YouTube Video - ঐচ্ছিক)</span>
+                </label>
+                <input 
+                    type="url" 
+                    name="youtube_url" 
+                    value="{{ old('youtube_url') }}" 
+                    placeholder="যেমন: https://www.youtube.com/watch?v=... অথবা https://youtu.be/..."
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-medium focus:ring-2 focus:ring-red-500 focus:outline-none"
+                >
+                <p class="text-[11px] text-slate-400 mt-1">
+                    💡 জমিতে গিয়ে ভিডিও করে ইউটিউবে আপলোড করা থাকলে লিংক দিন, ক্রেতারা জমির চারপাশের পরিবেশ সরাসরি ভিডিওতে দেখতে পারবেন।
+                </p>
+            </div>
+
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">সরাসরি যোগাযোগের মোবাইল নম্বর *</label>
@@ -346,4 +392,42 @@
     </form>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function locationPicker(districtsData) {
+        return {
+            districts: districtsData,
+            selectedDistrict: 1,
+            selectedUpazila: 1,
+            selectedUnion: '',
+            selectedVillage: '',
+            get currentUpazilas() {
+                let dist = this.districts.find(d => d.id == this.selectedDistrict);
+                return dist && dist.upazilas ? dist.upazilas : [];
+            },
+            get currentUnions() {
+                let upz = this.currentUpazilas.find(u => u.id == this.selectedUpazila);
+                return upz && upz.unions ? upz.unions : [];
+            },
+            get currentVillages() {
+                let un = this.currentUnions.find(u => u.id == this.selectedUnion);
+                return un && un.villages ? un.villages : [];
+            },
+            onDistrictChange() {
+                let upz = this.currentUpazilas[0];
+                this.selectedUpazila = upz ? upz.id : '';
+                this.onUpazilaChange();
+            },
+            onUpazilaChange() {
+                this.selectedUnion = '';
+                this.selectedVillage = '';
+            },
+            onUnionChange() {
+                this.selectedVillage = '';
+            }
+        }
+    }
+</script>
+@endpush
 

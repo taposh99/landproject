@@ -6,7 +6,9 @@ use App\Models\District;
 use App\Models\Favorite;
 use App\Models\Inquiry;
 use App\Models\Property;
+use App\Models\Union;
 use App\Models\Upazila;
+use App\Models\Village;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,7 +19,7 @@ class PropertyController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Property::approved()->with(['district', 'upazila', 'user']);
+        $query = Property::approved()->with(['district', 'upazila', 'union', 'village', 'user']);
 
         // Filter: District
         if ($request->filled('district_id')) {
@@ -27,6 +29,16 @@ class PropertyController extends Controller
         // Filter: Upazila (e.g. Palash)
         if ($request->filled('upazila_id')) {
             $query->where('upazila_id', $request->upazila_id);
+        }
+
+        // Filter: Union
+        if ($request->filled('union_id')) {
+            $query->where('union_id', $request->union_id);
+        }
+
+        // Filter: Village
+        if ($request->filled('village_id')) {
+            $query->where('village_id', $request->village_id);
         }
 
         // Filter: Land Type
@@ -68,16 +80,21 @@ class PropertyController extends Controller
         };
 
         $properties = $query->paginate(9)->withQueryString();
-        $districts = District::with('upazilas')->get();
-        $selectedUpazila = $request->filled('upazila_id') ? Upazila::find($request->upazila_id) : null;
+        $districts = District::with(['upazilas.unions.villages'])->get();
+        $selectedUpazila = $request->filled('upazila_id') ? Upazila::with('unions.villages')->find($request->upazila_id) : null;
+        $selectedUnion = $request->filled('union_id') ? Union::with('villages', 'upazila')->find($request->union_id) : null;
 
-        return view('properties.index', compact('properties', 'districts', 'selectedUpazila'));
+        if ($selectedUnion && ! $selectedUpazila) {
+            $selectedUpazila = $selectedUnion->upazila;
+        }
+
+        return view('properties.index', compact('properties', 'districts', 'selectedUpazila', 'selectedUnion'));
     }
 
     public function show(string $slug): View
     {
         $property = Property::where('slug', $slug)
-            ->with(['district', 'upazila', 'user', 'images'])
+            ->with(['district', 'upazila', 'union', 'village', 'user', 'images'])
             ->firstOrFail();
 
         // Increment view count
@@ -102,7 +119,7 @@ class PropertyController extends Controller
 
     public function create(): View
     {
-        $districts = District::with('upazilas')->get();
+        $districts = District::with(['upazilas.unions.villages'])->get();
 
         return view('properties.create', compact('districts'));
     }
@@ -113,6 +130,8 @@ class PropertyController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'district_id' => ['required', 'exists:districts,id'],
             'upazila_id' => ['required', 'exists:upazilas,id'],
+            'union_id' => ['nullable', 'exists:unions,id'],
+            'village_id' => ['nullable', 'exists:villages,id'],
             'mouza_area' => ['nullable', 'string', 'max:100'],
             'land_type' => ['required', 'in:residential,commercial,agricultural,industrial'],
             'land_size' => ['required', 'numeric', 'min:0.1'],
@@ -133,6 +152,7 @@ class PropertyController extends Controller
             'description' => ['required', 'string', 'min:20'],
             'featured_image' => ['nullable', 'url'],
             'image_file' => ['nullable', 'image', 'max:3072'],
+            'youtube_url' => ['nullable', 'url', 'max:255'],
         ]);
 
         $featuredImageUrl = $validated['featured_image'] ?? null;
@@ -150,6 +170,8 @@ class PropertyController extends Controller
             'user_id' => Auth::id(),
             'district_id' => $validated['district_id'],
             'upazila_id' => $validated['upazila_id'],
+            'union_id' => $validated['union_id'] ?? null,
+            'village_id' => $validated['village_id'] ?? null,
             'mouza_area' => $validated['mouza_area'] ?? null,
             'title' => $validated['title'],
             'slug' => Str::slug($validated['title']).'-'.Str::random(6),
@@ -171,6 +193,7 @@ class PropertyController extends Controller
             'contact_number' => $validated['contact_number'],
             'whatsapp_number' => $validated['whatsapp_number'] ?? null,
             'featured_image' => $featuredImageUrl,
+            'youtube_url' => $validated['youtube_url'] ?? null,
             'status' => 'pending', // Pending approval!
             'is_verified' => false,
         ]);

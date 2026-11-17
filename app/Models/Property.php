@@ -16,6 +16,8 @@ class Property extends Model
         'user_id',
         'district_id',
         'upazila_id',
+        'union_id',
+        'village_id',
         'mouza_area',
         'title',
         'slug',
@@ -43,6 +45,7 @@ class Property extends Model
         'is_featured',
         'rejection_reason',
         'featured_image',
+        'youtube_url',
         'views_count',
     ];
 
@@ -74,6 +77,16 @@ class Property extends Model
     public function upazila(): BelongsTo
     {
         return $this->belongsTo(Upazila::class);
+    }
+
+    public function union(): BelongsTo
+    {
+        return $this->belongsTo(Union::class);
+    }
+
+    public function village(): BelongsTo
+    {
+        return $this->belongsTo(Village::class);
     }
 
     public function images(): HasMany
@@ -134,5 +147,19 @@ class Property extends Model
             'acre' => 'একর',
             default => $this->size_unit,
         };
+    }
+
+    public function getYoutubeEmbedUrlAttribute(): ?string
+    {
+        if (empty($this->youtube_url)) {
+            return null;
+        }
+
+        $pattern = '/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i';
+        if (preg_match($pattern, $this->youtube_url, $matches)) {
+            return 'https://www.youtube-nocookie.com/embed/'.$matches[1];
+        }
+
+        return null;
     }
 }

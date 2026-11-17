@@ -21,6 +21,12 @@
                 </span>
             @endif
 
+            @if($property->youtube_url)
+                <span class="inline-flex items-center gap-1 bg-red-600/90 backdrop-blur text-white text-[11px] font-bold px-2 py-0.5 rounded-lg shadow-sm">
+                    🎥 ভিডিও সহ
+                </span>
+            @endif
+
             <span class="inline-flex items-center bg-slate-900/80 backdrop-blur text-white text-[11px] font-medium px-2 py-0.5 rounded-lg">
                 {{ $property->land_type_bangla }}
             </span>
@@ -55,9 +61,9 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             <span class="truncate font-medium">
-                {{ $property->mouza_area ? $property->mouza_area . ', ' : '' }}
-                {{ $property->upazila?->bn_name ?? 'পলাশ' }}, 
-                {{ $property->district?->bn_name ?? 'নরসিংদী' }}
+                {{ $property->village ? $property->village->bn_name . ', ' : ($property->mouza_area ? $property->mouza_area . ', ' : '') }}
+                {{ $property->union ? $property->union->bn_name . ', ' : '' }}
+                {{ $property->upazila?->bn_name ?? 'পলাশ' }}
             </span>
         </div>
 

@@ -12,6 +12,8 @@ Route::get('/properties', [PropertyController::class, 'index'])->name('propertie
 Route::get('/property/{slug}', [PropertyController::class, 'show'])->name('properties.show');
 Route::get('/converter', [HomeController::class, 'converter'])->name('converter');
 Route::get('/api/upazilas', [HomeController::class, 'getUpazilas'])->name('api.upazilas');
+Route::get('/api/unions', [HomeController::class, 'getUnions'])->name('api.unions');
+Route::get('/api/villages', [HomeController::class, 'getVillages'])->name('api.villages');
 
 // Public Inquiry submission (works for both guests & logged-in users)
 Route::post('/property/{property}/inquiry', [PropertyController::class, 'submitInquiry'])->name('properties.inquiry');

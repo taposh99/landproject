@@ -14,12 +14,18 @@
                 <span class="text-slate-800 font-semibold">জমির তালিকা</span>
                 @if($selectedUpazila)
                     <span>/</span>
-                    <span class="text-emerald-700 font-bold">{{ $selectedUpazila->bn_name }}</span>
+                    <a href="{{ route('properties.index', ['upazila_id' => $selectedUpazila->id]) }}" class="text-emerald-700 font-bold">{{ $selectedUpazila->bn_name }}</a>
+                @endif
+                @if($selectedUnion)
+                    <span>/</span>
+                    <span class="text-slate-800 font-bold">{{ $selectedUnion->bn_name }}</span>
                 @endif
             </nav>
             <h1 class="text-xl sm:text-2xl font-black text-slate-900">
-                @if($selectedUpazila)
-                    {{ $selectedUpazila->bn_name }} থানার জমি সমূহ
+                @if($selectedUnion)
+                    {{ $selectedUnion->bn_name }} @if($selectedUpazila)({{ $selectedUpazila->bn_name }})@endif এলাকার জমি সমূহ
+                @elseif($selectedUpazila)
+                    {{ $selectedUpazila->bn_name }} উপজেলার জমি সমূহ
                 @else
                     নরসিংদী ও অন্যান্য এলাকার সকল জমি
                 @endif
@@ -99,6 +105,34 @@
                             @endforeach
                         </select>
                     </div>
+
+                    <!-- Union Filter -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">ইউনিয়ন / পৌরসভা</label>
+                        <select name="union_id" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="">সকল ইউনিয়ন / পৌরসভা</option>
+                            @foreach($selectedUpazila?->unions ?? \App\Models\Union::all() as $union)
+                                <option value="{{ $union->id }}" {{ request('union_id') == $union->id ? 'selected' : '' }}>
+                                    {{ $union->bn_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Village Filter (if union selected) -->
+                    @if($selectedUnion && $selectedUnion->villages->count() > 0)
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">গ্রাম / এলাকা</label>
+                            <select name="village_id" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <option value="">সকল গ্রাম</option>
+                                @foreach($selectedUnion->villages as $vil)
+                                    <option value="{{ $vil->id }}" {{ request('village_id') == $vil->id ? 'selected' : '' }}>
+                                        {{ $vil->bn_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
 
                     <!-- Land Type -->
                     <div>

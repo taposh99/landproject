@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\District;
 use App\Models\Property;
+use App\Models\Union;
 use App\Models\Upazila;
 use App\Models\User;
 use Illuminate\Support\Str;
@@ -114,5 +115,15 @@ class LandProjectFeatureTest extends TestCase
         // Now visible on public listing
         $response = $this->get(route('properties.index'));
         $response->assertSee($property->title);
+    }
+
+    public function test_can_filter_properties_by_union(): void
+    {
+        $union = Union::where('name', 'Ghorashal')->first();
+        $this->assertNotNull($union);
+
+        $response = $this->get(route('properties.index', ['union_id' => $union->id]));
+        $response->assertStatus(200);
+        $response->assertSee('ঘোড়াশাল');
     }
 }

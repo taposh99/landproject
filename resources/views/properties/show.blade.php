@@ -14,6 +14,18 @@
         <a href="{{ route('properties.index', ['upazila_id' => $property->upazila_id]) }}" class="hover:text-emerald-700 shrink-0 text-emerald-700 font-semibold">
             {{ $property->upazila?->bn_name ?? 'পলাশ' }}
         </a>
+        @if($property->union)
+            <span>/</span>
+            <a href="{{ route('properties.index', ['upazila_id' => $property->upazila_id, 'union_id' => $property->union_id]) }}" class="hover:text-emerald-700 shrink-0 font-medium">
+                {{ $property->union->bn_name }}
+            </a>
+        @endif
+        @if($property->village)
+            <span>/</span>
+            <span class="text-slate-600 shrink-0 font-semibold">
+                {{ $property->village->bn_name }}
+            </span>
+        @endif
         <span>/</span>
         <span class="text-slate-800 font-semibold truncate">{{ $property->title }}</span>
     </nav>
@@ -66,7 +78,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
-                            <span>{{ $property->address ?? ($property->mouza_area . ', ' . $property->upazila?->bn_name . ', ' . $property->district?->bn_name) }}</span>
+                            <span>{{ $property->address ?? (($property->village ? $property->village->bn_name . ', ' : '') . ($property->union ? $property->union->bn_name . ', ' : '') . $property->upazila?->bn_name . ', ' . $property->district?->bn_name) }}</span>
                         </div>
                         <h1 class="text-xl sm:text-2xl font-black text-slate-900 leading-snug">
                             {{ $property->title }}
@@ -103,13 +115,13 @@
                     </div>
 
                     <div class="bg-slate-50 p-3 rounded-2xl">
-                        <span class="block text-[11px] text-slate-500 font-medium">উপজেলা / থানা</span>
-                        <span class="text-sm sm:text-base font-black text-emerald-800">{{ $property->upazila?->bn_name }}</span>
+                        <span class="block text-[11px] text-slate-500 font-medium">ইউনিয়ন / পৌরসভা</span>
+                        <span class="text-sm sm:text-base font-black text-emerald-800">{{ $property->union?->bn_name ?? $property->upazila?->bn_name }}</span>
                     </div>
 
                     <div class="bg-slate-50 p-3 rounded-2xl">
-                        <span class="block text-[11px] text-slate-500 font-medium">এলাকা / মৌজা</span>
-                        <span class="text-sm sm:text-base font-black text-slate-900">{{ $property->mouza_area ?? 'পলাশ' }}</span>
+                        <span class="block text-[11px] text-slate-500 font-medium">গ্রাম / এলাকা</span>
+                        <span class="text-sm sm:text-base font-black text-slate-900">{{ $property->village?->bn_name ?? ($property->mouza_area ?? 'পলাশ') }}</span>
                     </div>
                 </div>
 
@@ -158,6 +170,38 @@
                     </div>
                 </div>
             </div>
+
+            <!-- YouTube Video Player Section -->
+            @if($property->youtube_embed_url)
+                <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-black text-slate-900 text-sm sm:text-base flex items-center gap-2">
+                            <span class="p-1.5 rounded-lg bg-red-50 text-red-600">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                                </svg>
+                            </span>
+                            <span>জমির সরজমিন ভিডিও (Land Video Tour)</span>
+                        </h3>
+                        <span class="text-[11px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-md">YouTube</span>
+                    </div>
+
+                    <div class="relative w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-md">
+                        <iframe 
+                            src="{{ $property->youtube_embed_url }}" 
+                            title="YouTube video player" 
+                            class="w-full h-full border-0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                            referrerpolicy="strict-origin-when-cross-origin"
+                            allowfullscreen
+                        ></iframe>
+                    </div>
+                    <p class="text-[11px] text-slate-500 mt-2 flex items-center gap-1.5">
+                        <span>💡</span>
+                        <span>জমির অবস্থান, রাস্তা ও চারপাশের পরিবেশ বাস্তব ভিডিও থেকে দেখে নিন।</span>
+                    </p>
+                </div>
+            @endif
 
             <!-- Pre-calculated Unit Converter for this land -->
             <div class="bg-emerald-50 rounded-3xl p-5 border border-emerald-100">

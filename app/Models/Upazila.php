@@ -18,6 +18,11 @@ class Upazila extends Model
         return $this->belongsTo(District::class);
     }
 
+    public function unions(): HasMany
+    {
+        return $this->hasMany(Union::class);
+    }
+
     public function properties(): HasMany
     {
         return $this->hasMany(Property::class);

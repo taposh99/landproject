@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\District;
 use App\Models\Property;
+use App\Models\Union;
 use App\Models\Upazila;
+use App\Models\Village;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -55,5 +57,21 @@ class HomeController extends Controller
         $upazilas = Upazila::where('district_id', $districtId)->get(['id', 'name', 'bn_name']);
 
         return response()->json($upazilas);
+    }
+
+    public function getUnions(Request $request): JsonResponse
+    {
+        $upazilaId = $request->get('upazila_id');
+        $unions = Union::where('upazila_id', $upazilaId)->get(['id', 'name', 'bn_name']);
+
+        return response()->json($unions);
+    }
+
+    public function getVillages(Request $request): JsonResponse
+    {
+        $unionId = $request->get('union_id');
+        $villages = Village::where('union_id', $unionId)->get(['id', 'name', 'bn_name']);
+
+        return response()->json($villages);
     }
 }
